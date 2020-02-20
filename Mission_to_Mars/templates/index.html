@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Mission to Mars</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <style>
+    body {
+    font-size: 150%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="jumbotron text-center">
+      <h1>Mission to Mars - HY</h1>
+      <p><a class="btn btn-primary btn-lg" href="/scrape" role="button">Scrape New Data</a></p>
+      <p>It may take a few moments to update the site with new information.</p>
+    </div>
+
+    <!-- News and Weather -->
+    <div class="row">
+      <div class="col-md-8">
+        <h1 class="heading">Latest Mars News</h1>
+        <h3 class="heading">{{mars_info.news_title}}</h3>
+        <p> {{mars_info.news_p}} </p>
+      </div>
+      <div class="col-md-4">
+        <h2>Current Weather on Mars</h2>
+        <p>{{mars_info.weather}}</p>  
+      </div>
+    </div>
+
+    <!-- Featured Image and Facts Table -->
+    <div class="row">
+        <div class="col-md-8">
+            <h1>Featured Mars Image</h1>
+            <image class = "img-responsive" src= {{mars_info.featured_img}} alt="Featured Image">
+        </div>
+        <div class="col-md-4">
+            <h2>Mars Facts</h2>
+            <table class = "table">
+                {{mars_info.facts | safe}}
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Hemispheres Title -->
+    <div class="row text-center">
+        <div class="col-md-12">
+            <h1>Mars Hemispheres</h1>
+        </div>
+    </div>
+    
+    <!-- First Two Hemispheres -->
+    <div class="row text-center">
+        <div class = "col-md-6">
+            <h3>{{mars_info.hemispheres[0]["title"]}}</h3>
+            <image class = "img-responsive" src= {{mars_info.hemispheres[0]["img_url"]}} alt="Featured Image">
+        </div>
+        <div class = "col-md-6">
+            <h3>{{mars_info.hemispheres[1]["title"]}}</h3>
+            <image class = "img-responsive" src= {{mars_info.hemispheres[1]["img_url"]}} alt="Featured Image">
+        </div>
+    </div>
+
+    <!-- Last Two Hemispheres -->
+    <div class="row text-center ">
+        <div class = "col-md-6">
+            <h3>{{mars_info.hemispheres[2]["title"]}}</h3>
+            <image class = "img-responsive" src= {{mars_info.hemispheres[2]["img_url"]}} alt="Featured Image">
+        </div>
+        <div class = "col-md-6">
+            <h3>{{mars_info.hemispheres[3]["title"]}}</h3>
+            <image class = "img-responsive" src= {{mars_info.hemispheres[3]["img_url"]}} alt="Featured Image">
+        </div>
+    </div>
+
+  </div>
+</body>
+
+</html>
+

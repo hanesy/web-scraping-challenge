@@ -1,31 +1,160 @@
-# ## Step 2 - MongoDB and Flask Application
+# import dependencies
+from bs4 import BeautifulSoup
 
-# Use MongoDB with Flask templating to create a new HTML page that displays all of the information that was scraped from the URLs above.
+from splinter import Browser
 
-# * Start by converting your Jupyter notebook into a Python script called `scrape_mars.py` with a function called `scrape` that will execute all of your scraping code from above and return one Python dictionary containing all of the scraped data.
+import time
+import re
+import pandas as pd
 
-# * Next, create a route called `/scrape` that will import your `scrape_mars.py` script and call your `scrape` function.
+def init_browser():
+    # @NOTE: Replace the path with your actual path to the chromedriver
+    executable_path = {"executable_path": "chromedriver.exe"}
+    return Browser("chrome", **executable_path, headless=False)
 
-#   * Store the return value in Mongo as a Python dictionary.
+def scrape():
+    browser = init_browser()
 
-# * Create a root route `/` that will query your Mongo database and pass the mars data into an HTML template to display the data.
+    #scrape latest news
+    url_news = 'https://mars.nasa.gov/news/'
+    browser.visit(url_news)
 
-# * Create a template HTML file called `index.html` that will take the mars data dictionary and display all of the data in the appropriate HTML elements. Use the following as a guide for what the final product should look like, but feel free to create your own design.
+    #delay to make sure the browser runs before the soup
+    time.sleep(3)
+    html = browser.html
+    soup_news = BeautifulSoup(html, 'html.parser')
 
-# ## Step 3 - Submission
+    #retrieve latest news title
+    title_results = soup_news.find_all('div', class_='content_title')
+    news_title = title_results[0].text.strip()
 
-# To submit your work to BootCampSpot, create a new GitHub repository and upload the following:
+    #retieve latest news paragraph text
+    paragraph_results = soup_news.find_all('div', class_='article_teaser_body')
+    news_p = paragraph_results[0].text.strip()
 
-# 1. The Jupyter Notebook containing the scraping code used.
+    print(f"""Latest News
+    ---
+    {news_title}
+    ---
+    {news_p}""")
 
-# 2. Screenshots of your final application.
 
-# 3. Submit the link to your new repository to BootCampSpot.
+    #scrape featured image
+    base_url = 'https://www.jpl.nasa.gov'
+    search_url = '/spaceimages/?search=&category=Mars'
+    url_image = base_url+search_url
+    browser.visit(url_image)
 
-# ## Hints
+    #delay to make sure the browser runs before the soup
+    time.sleep(3)
+    html = browser.html
+    soup_image = BeautifulSoup(html, 'html.parser')
 
-# * Use Splinter to navigate the sites when needed and BeautifulSoup to help find and parse out the necessary data.
+    #retrieve url
+    url_search = soup_image.find_all('div', class_='carousel_container')[0].find('article')['style']
 
-# * Use Pymongo for CRUD applications for your database. For this homework, you can simply overwrite the existing document each time the `/scrape` url is visited and new data is obtained.
+    #store url
+    # Helpful source: https://stackoverflow.com/questions/19449709/how-to-extract-string-inside-single-quotes-using-python-script
+    feature_url = re.findall(r"'(.*?)'", url_search)[0]
+    featured_image_url = base_url+feature_url
+    print(featured_image_url)
 
-# * Use Bootstrap to structure your HTML template.
+
+    #scrape weather
+    twitter_url = 'https://twitter.com/marswxreport?lang=en'
+    browser.visit(twitter_url)
+
+    #delay to make sure the browser runs before the soup
+    time.sleep(3)
+    html = browser.html
+    soup_twitter = BeautifulSoup(html, 'html.parser')
+
+    #store weather
+    weather_results = soup_twitter.find_all('div', class_='css-901oao r-hkyrab r-1qd0xha r-a023e6 r-16dba41 r-ad9z0x r-bcqeeo r-bnwqim r-qvutc0')
+    mars_weather = weather_results[0].text.replace('\n',' ')
+
+    print (f"""Mars Weather
+    ---
+    {mars_weather}""")
+
+
+    #scrape facts
+    facts_url = 'https://space-facts.com/mars/'
+    facts_table = pd.read_html(facts_url)
+
+    #extract table and clean
+    df = facts_table[0]
+    df.columns = ['Description', 'Value']
+    # df.set_index('Description', inplace=True)
+
+    #table to html in html_table variable
+    html_table = df.to_html(classes='', border=False, index=False)
+    html_table = html_table.replace('\n', '')
+
+    print ("df complete")
+
+
+
+    #scrape hemispheres
+    base_url = 'https://astrogeology.usgs.gov'
+    search_url = '/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
+    hemisphere_url = base_url+search_url
+    browser.visit(hemisphere_url)
+
+    # delay to make sure the browser runs before the soup
+    time.sleep(3)
+    html = browser.html
+    soup_hemisphere = BeautifulSoup(html, 'html.parser')
+
+    #obtain list of hemisphere related html
+    hem_items = soup_hemisphere.find_all('div', class_='item')
+
+    #set up list for saving hemisphere dictionaries
+    hemisphere_image_urls = []
+
+    #iterating through each hemisphere
+    for item in hem_items:
+        
+    #set up dictionary for title and img_url
+        hem_dict = {}
+        
+        #find hemisphere name
+        hem_name = item.find('h3').text
+        
+        #clean and store title
+        h_img_title = hem_name.split(' Enhanced')[0]
+        hem_dict['title']= h_img_title 
+        
+        #navigate to specific site to retrieve image
+        browser.click_link_by_partial_text(hem_name)
+
+        # delay to make sure the browser runs before the soup for hemisphere page
+        time.sleep(3)
+        html = browser.html
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        # retrieve image
+        hem_img = soup.find_all('img', class_='wide-image')
+        h_img_url = hem_img[0]['src']
+        h_img_url_full = base_url + h_img_url
+        hem_dict['img_url']= h_img_url_full
+        
+        #add to list
+        hemisphere_image_urls.append(hem_dict)
+        
+        #get back to main page
+        browser.back()
+    print(hemisphere_image_urls)
+
+    mars_data = {
+        "news_title": news_title,
+        "news_p": news_p,
+        "featured_img": featured_image_url,
+        "weather": mars_weather,
+        "facts": html_table,
+        "hemispheres": hemisphere_image_urls
+    }
+
+    browser.quit()
+
+    return mars_data
